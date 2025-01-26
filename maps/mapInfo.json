@@ -1,0 +1,12 @@
+{
+    "maps": [
+        {
+            "name": "Budynek A",
+            "directory": "A"
+        },
+        {
+            "name": "Budynek B",
+            "directory": "B"
+        }
+    ]
+}

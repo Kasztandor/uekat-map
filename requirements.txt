@@ -1,0 +1,17 @@
+certifi==2024.12.14
+charset-normalizer==3.4.1
+distlib==0.3.9
+docutils==0.21.2
+filelock==3.17.0
+filetype==1.2.0
+idna==3.10
+Kivy==2.3.1
+Kivy-examples==2.3.1
+Kivy-Garden==0.1.5
+pillow==10.4.0
+platformdirs==4.3.6
+Pygments==2.19.1
+requests==2.32.3
+setuptools==75.8.0
+urllib3==2.3.0
+virtualenv==20.29.1

@@ -172,3 +172,6 @@ cython_debug/
 
 # Reference pictures
 .reference
+
+# Kivy virtual enviroment
+kivy_venv
