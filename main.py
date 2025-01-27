@@ -8,7 +8,7 @@ from kivy.uix.image import Image
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.graphics import Color, Rectangle
-
+from kivy.uix.anchorlayout import AnchorLayout
 
 class MainScreen(Screen):
     def __init__(self, maps, **kwargs):
@@ -34,11 +34,15 @@ class MainScreen(Screen):
         self.manager.current = "map"
 
 
+from kivy.uix.anchorlayout import AnchorLayout
+
 class MapScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.current_map = None
         self.current_floor = None
+
+        # Scatter do obsługi mapy
         self.scatter = Scatter(do_scale=True, do_translation=True, do_rotation=False)
 
         with self.canvas.before:
@@ -46,23 +50,43 @@ class MapScreen(Screen):
             self.bg_rect = Rectangle(size=self.size, pos=self.pos)
             self.bind(size=self._update_bg_rect, pos=self._update_bg_rect)
 
-        self.image = Image(allow_stretch=True, keep_ratio=True)
+        # Obraz mapy
+        self.image = Image(allow_stretch=True, keep_ratio=True, size_hint=(None, None))
         self.scatter.add_widget(self.image)
 
-        # Układ nawigacyjny
-        self.floor_buttons = BoxLayout(orientation="horizontal", size_hint=(1, 0.1))
+        # Przyciski pięter
+        self.floor_buttons = BoxLayout(orientation="horizontal", size_hint=(1, None), height=50)
+
+        # ScrollView z listą sal
         self.room_scroll = ScrollView(size_hint=(1, 0.2), do_scroll_x=True, do_scroll_y=False)
         self.room_list = GridLayout(cols=1, size_hint_y=1, size_hint_x=None, spacing=10, padding=10)
         self.room_list.bind(minimum_width=self.room_list.setter('width'))
         self.room_scroll.add_widget(self.room_list)
 
         # Główny układ
-        self.layout = BoxLayout(orientation="vertical")
-        self.layout.add_widget(self.floor_buttons)
-        self.layout.add_widget(self.scatter)
-        self.layout.add_widget(self.room_scroll)
+        self.main_layout = BoxLayout(orientation="vertical")
+        self.main_layout.add_widget(self.scatter)
+        self.main_layout.add_widget(self.room_scroll)
 
-        self.add_widget(self.layout)
+        # AnchorLayout dla przycisku powrotu
+        self.top_layout = AnchorLayout(anchor_x='left', anchor_y='top', size_hint=(1, 1))
+        self.back_button = Button(
+            text="<-",
+            size_hint=(None, None),
+            size=(50, 50),
+            background_normal="",
+            background_color=(0.8, 0.8, 0.8, 1),  # Szary kolor
+            color=(0, 0, 0, 1),
+            font_size=20,
+            border=(16, 16, 16, 16),
+        )
+        self.back_button.bind(on_press=self.go_back)
+        self.top_layout.add_widget(self.back_button)
+
+        # Cały ekran, z podziałem na warstwy
+        self.add_widget(self.main_layout)
+        self.add_widget(self.floor_buttons)  # Przyciski pięter na wierzchu
+        self.add_widget(self.top_layout)  # Przycisk powrotu na samej górze
 
     def _update_bg_rect(self, *args):
         self.bg_rect.size = self.size
@@ -70,8 +94,11 @@ class MapScreen(Screen):
 
     def load_map(self, map_data):
         self.current_map = map_data
-        self.image.source = map_data["png_file"]
-        self.image.reload()
+
+        if "png_file" in map_data:
+            self.image.source = map_data["png_file"]
+            self.image.reload()
+            self.adjust_image_size()
 
         # Resetowanie scattera
         self.scatter.scale = 1
@@ -79,6 +106,27 @@ class MapScreen(Screen):
 
         self.update_floor_buttons()
         self.current_floor = map_data.get("map", [])[0] if map_data.get("map") else None
+
+    def adjust_image_size(self):
+        """
+        Automatycznie dopasowuje szerokość mapy do szerokości okna.
+        """
+        if self.image.texture:
+            texture_width, texture_height = self.image.texture.size
+            screen_width = self.width
+
+            # Skalowanie obrazu, aby pasował na szerokość ekranu
+            scale_factor = screen_width / texture_width
+            self.image.size = (texture_width * scale_factor, texture_height * scale_factor)
+
+            # Centrowanie obrazu
+            self.image.pos = (0, (self.height - self.image.height) / 2)
+
+    def on_size(self, *args):
+        """
+        Aktualizacja rozmiaru obrazu przy zmianie rozmiaru okna.
+        """
+        self.adjust_image_size()
 
     def update_floor_buttons(self):
         self.floor_buttons.clear_widgets()
@@ -91,11 +139,10 @@ class MapScreen(Screen):
 
     def load_floor(self, floor):
         self.current_floor = floor
-        if 'png' in floor:
+        if "png" in floor:
             self.image.source = floor["png"]
             self.image.reload()
-        else:
-            print("Brak klucza 'png' w danym piętrze.")
+            self.adjust_image_size()
 
         # Resetowanie scattera
         self.scatter.scale = 1
@@ -112,6 +159,11 @@ class MapScreen(Screen):
             )
             self.room_list.add_widget(button)
 
+    def go_back(self, instance):
+        """
+        Obsługa przycisku powrotu. Przejście do ekranu wyboru budynku.
+        """
+        self.manager.current = "main"
 
 
 def mapLister():
@@ -139,6 +191,20 @@ def mapLister():
             ],
             "svg_file": "maps/B/0.svg",
             "png_file": "maps/B/0.png"
+        },
+        {
+            "name": "CNTI",
+            "map": [
+                {"name": "1", "file": "maps/CNTI/1.svg", "png": "maps/CNTI/1.png"},
+                {"name": "2", "file": "maps/CNTI/2.svg", "png": "maps/CNTI/2.png"},
+                {"name": "3", "file": "maps/CNTI/3.svg", "png": "maps/CNTI/3.png"},
+                {"name": "4", "file": "maps/CNTI/4.svg", "png": "maps/CNTI/4.png"},
+                {"name": "5", "file": "maps/CNTI/5.svg", "png": "maps/CNTI/5.png"},
+                {"name": "6", "file": "maps/CNTI/6.svg", "png": "maps/CNTI/6.png"},
+                {"name": "7", "file": "maps/CNTI/7.svg", "png": "maps/CNTI/7.png"}
+            ],
+            "svg_file": "maps/CNTI/1.svg",
+            "png_file": "maps/CNTI/1.png"
         }
     ]
     return maps

@@ -8,10 +8,14 @@ idna==3.10
 Kivy==2.3.1
 Kivy-examples==2.3.1
 Kivy-Garden==0.1.5
+numpy==2.2.2
 pillow==10.4.0
 platformdirs==4.3.6
 Pygments==2.19.1
 requests==2.32.3
+scipy==1.15.1
 setuptools==75.8.0
+svgpathtools==1.6.1
+svgwrite==1.4.3
 urllib3==2.3.0
 virtualenv==20.29.1
